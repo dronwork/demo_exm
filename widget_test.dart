@@ -1,51 +1,30 @@
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:mobile_a/main.dart';
+import 'package:stocks/main.dart' as stocks;
+import 'package:stocks/stock_data.dart' as stock_data;
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+  stock_data.StockData.actuallyFetchData = false;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('Changing locale', (WidgetTester tester) async {
+    stocks.main();
+    await tester.idle(); // see https://github.com/flutter/flutter/issues/1865
     await tester.pump();
+    // The initial test app's locale is "_", so we're seeing the fallback translation here.
+    expect(find.text('MARKET'), findsOneWidget);
+    await tester.binding.setLocale('es', 'US');
+    await tester.idle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-    class Spacecraft {
-  String name;
-  DateTime launchDate;
+    // The Localizations widget has been built with the new locale. The
+    // new locale's strings are loaded asynchronously, so we're still
+    // displaying the previous locale's strings.
+    await tester.pump();
+    expect(find.text('MARKET'), findsOneWidget);
 
-  // Constructor, with syntactic sugar for assignment to members.
-  Spacecraft(this.name, this.launchDate) {
-    // Initialization code goes here.
-  }
-
-  // Named constructor that forwards to the default one.
-  Spacecraft.unlaunched(String name) : this(name, null);
-
-  int get launchYear =>
-      launchDate?.year; // read-only non-final property
-
-  // Method.
-  void describe() {
-    print('Spacecraft: $name');
-    if (launchDate != null) {
-      int years =
-          DateTime.now().difference(launchDate).inDays ~/
-              365;
-      print('Launched: $launchYear ($years years ago)');
-    } else {
-      print('Unlaunched');
-    }
-  }
+    // The localized strings have finished loading and dependent
+    // widgets have been updated.
+    await tester.pump();
+    expect(find.text('MERCADO'), findsOneWidget);
+  });
 }
  
